@@ -25,7 +25,7 @@ jobs:
       #   timeout-minutes: 5
       #   env:
       #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-  docker-build:
+  docker-build-and-push:
     runs-on: ubuntu-latest
 
     steps:
@@ -54,7 +54,7 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ secrets.DOCKER_USERNAME }}/python-todo-app:${{ github.sha }}
-          
+
       - name: Change deployment image tag
         run: |
           # Replace the image line in the k8s deployment with the image we just pushed
