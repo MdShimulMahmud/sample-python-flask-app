@@ -44,13 +44,19 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t python-todo-app .
+          docker build -t python-todo-app:${{ github.sha }} .
       - name: Push Docker image
         run: |
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-          docker tag python-todo-app ${{ secrets.DOCKER_USERNAME }}/python-todo-app
-          docker push ${{ secrets.DOCKER_USERNAME }}/python-todo-app
+          docker tag python-todo-app:${{ github.sha }} ${{ secrets.DOCKER_USERNAME }}/python-todo-app:${{ github.sha }}
+          docker push ${{ secrets.DOCKER_USERNAME }}/python-todo-app:${{ github.sha }}
       - name: Trivy Security Scan
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ secrets.DOCKER_USERNAME }}/python-todo-app
+          image-ref: ${{ secrets.DOCKER_USERNAME }}/python-todo-app:${{ github.sha }}
+          
+      - name: Change deployment image tag
+        run: |
+          # Replace the image line in the k8s deployment with the image we just pushed
+          # Use GNU sed style (-i without backup) on ubuntu-latest runners
+          sed -i "s|image: .*|image: ${{ secrets.DOCKER_USERNAME }}/python-todo-app:${{ github.sha }}|" k8s/deployment.yaml
